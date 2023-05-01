@@ -2,7 +2,7 @@
 
 Forked from https://github.com/acheong08/EdgeGPT
 
-## Download & Dependency
+## Download & Install
 
 ```bash
 $ wget 'https://raw.githubusercontent.com/KevCui/EdgeGPT/master/src/EdgeGPT.py'
