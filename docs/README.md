@@ -2,14 +2,16 @@
 
 Forked from https://github.com/acheong08/EdgeGPT
 
-## Dependency
+## Download & Dependency
 
 ```bash
-pip install -r requirements.txt
+$ wget 'https://raw.githubusercontent.com/KevCui/EdgeGPT/master/src/EdgeGPT.py'
+$ chmod +x EdgeGPT.py
+$ pip install BingImageCreator certifi httpx prompt_toolkit requests rich websockets
 ```
 
 ## Usage
 
 ```bash
-src/EdgeGPT.py --help
+$ ./EdgeGPT.py --help
 ```
