@@ -1,7 +1,0 @@
-BingImageCreator
-certifi
-httpx
-prompt_toolkit
-requests
-rich
-websockets
