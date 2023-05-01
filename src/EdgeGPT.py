@@ -563,13 +563,13 @@ async def async_main(args: argparse.Namespace) -> None:
     bot = Chatbot(proxy=args.proxy, cookies=args.cookies)
     session = _create_session()
     completer = _create_completer(["!help", "!exit", "!reset"])
-    initial_prompt = args.prompt
+    initial_prompt = args.prompt_and_quit if args.prompt_and_quit else args.prompt
 
     while True:
-        print("\nYou:")
+        print("\nYou:") if not args.prompt_and_quit else None
         if initial_prompt:
             question = initial_prompt
-            print(question)
+            print(question) if not args.prompt_and_quit else None
             initial_prompt = None
         else:
             question = (
@@ -577,7 +577,7 @@ async def async_main(args: argparse.Namespace) -> None:
                 if args.enter_once
                 else await _get_input_async(session=session, completer=completer)
             )
-        print()
+        print() if not args.prompt_and_quit else None
         if question == "!exit":
             break
         if question == "!help":
@@ -592,7 +592,7 @@ async def async_main(args: argparse.Namespace) -> None:
         if question == "!reset":
             await bot.reset()
             continue
-        print("Bot:")
+        print("Bot:") if not args.prompt_and_quit else None
         if args.no_stream:
             print(
                 (
@@ -620,6 +620,7 @@ async def async_main(args: argparse.Namespace) -> None:
                             wrote = len(response)
                             md = Markdown(response)
                             live.update(md, refresh=True)
+                sys.exit(0) if args.prompt_and_quit else None
             else:
                 async for final, response in bot.ask_stream(
                     prompt=question,
@@ -632,6 +633,7 @@ async def async_main(args: argparse.Namespace) -> None:
                         else:
                             print(response[wrote:], end="", flush=True)
                         wrote = len(response)
+                sys.exit(0) if args.prompt_and_quit else None
                 print()
     await bot.close()
 
@@ -671,6 +673,13 @@ def main() -> None:
         required=False,
         help="prompt to start with",
     )
+    parser.add_argument(
+        "--prompt-and-quit",
+        type=str,
+        default="",
+        required=False,
+        help="prompt to start with and then quit after getting reply",
+    )
     args = parser.parse_args()
     if not args.cookie_file:
         parser.print_help()
@@ -688,4 +697,7 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        pass
