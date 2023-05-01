@@ -24,7 +24,6 @@ from typing import Union
 import certifi
 import httpx
 import websockets.client as websockets
-from BingImageCreator import ImageGenAsync
 from prompt_toolkit import PromptSession
 from prompt_toolkit.auto_suggest import AutoSuggestFromHistory
 from prompt_toolkit.completion import WordCompleter

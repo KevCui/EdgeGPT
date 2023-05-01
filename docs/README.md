@@ -7,7 +7,7 @@ Forked from [acheong08/EdgeGPT](https://github.com/acheong08/EdgeGPT), with some
 ```bash
 $ wget 'https://raw.githubusercontent.com/KevCui/EdgeGPT/master/src/EdgeGPT.py'
 $ chmod +x EdgeGPT.py
-$ pip install BingImageCreator certifi httpx prompt_toolkit requests rich websockets
+$ pip install certifi httpx prompt_toolkit requests rich websockets
 ```
 
 ## Configuration
