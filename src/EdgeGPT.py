@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 """
 Main.py
 """
@@ -285,7 +287,7 @@ class _Conversation:
             or None
         )
         if proxy is not None and proxy.startswith("socks5h://"):
-            proxy = "socks5://" + proxy[len("socks5h://") :]
+            proxy = "socks5://" + proxy[len("socks5h://"):]
         self.session = httpx.Client(
             proxies=proxy,
             timeout=30,
@@ -558,8 +560,6 @@ async def async_main(args: argparse.Namespace) -> None:
     """
     Main function
     """
-    print("Initializing...")
-    print("Enter `alt+enter` or `escape+enter` to send a message")
     bot = Chatbot(proxy=args.proxy, cookies=args.cookies)
     session = _create_session()
     completer = _create_completer(["!help", "!exit", "!reset"])
@@ -637,17 +637,6 @@ async def async_main(args: argparse.Namespace) -> None:
 
 
 def main() -> None:
-    print(
-        """
-        EdgeGPT - A demo of reverse engineering the Bing GPT chatbot
-        Repo: github.com/acheong08/EdgeGPT
-        By: Antonio Cheong
-
-        !help for help
-
-        Type !exit to exit
-    """,
-    )
     parser = argparse.ArgumentParser()
     parser.add_argument("--enter-once", action="store_true")
     parser.add_argument("--no-stream", action="store_true")
