@@ -620,7 +620,6 @@ async def async_main(args: argparse.Namespace) -> None:
                             wrote = len(response)
                             md = Markdown(response)
                             live.update(md, refresh=True)
-                sys.exit(0) if args.prompt_and_quit else None
             else:
                 async for final, response in bot.ask_stream(
                     prompt=question,
@@ -633,8 +632,9 @@ async def async_main(args: argparse.Namespace) -> None:
                         else:
                             print(response[wrote:], end="", flush=True)
                         wrote = len(response)
-                sys.exit(0) if args.prompt_and_quit else None
                 print()
+        if args.prompt_and_quit:
+            break
     await bot.close()
 
 
