@@ -1,6 +1,6 @@
-# Edge GPT
+# L'edge GPT
 
-Forked from https://github.com/acheong08/EdgeGPT
+Forked from [acheong08/EdgeGPT](https://github.com/acheong08/EdgeGPT), with some personal tweaks.
 
 ## Download & Install
 
