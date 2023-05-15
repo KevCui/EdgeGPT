@@ -367,10 +367,12 @@ class _Conversation:
         )
         if proxy is not None and proxy.startswith("socks5h://"):
             proxy = "socks5://" + proxy[len("socks5h://"):]
+        transport = httpx.AsyncHTTPTransport(retries=10)
         async with httpx.AsyncClient(
             proxies=proxy,
             timeout=30,
             headers=HEADERS_INIT_CONVER,
+            transport=transport,
         ) as client:
             for cookie in cookies:
                 client.cookies.set(cookie["name"], cookie["value"])
@@ -510,51 +512,41 @@ class _ChatHub:
                                 images = await image_generator.get_images(
                                     response["arguments"][0]["messages"][0]["text"],
                                 )
-                            cache = resp_txt
-                            resp_txt = (
-                                cache
-                                + "\n![image0]("
-                                + images[0]
-                                + ")\n![image1]("
-                                + images[1]
-                                + ")\n![image0]("
-                                + images[2]
-                                + ")\n![image3]("
-                                + images[3]
-                                + ")"
-                            )
+                            for i, image in enumerate(images):
+                                resp_txt = resp_txt + f"\n![image{i}]({image})"
                             draw = True
                         if (
                             response["arguments"][0]["messages"][0]["contentOrigin"]
                             != "Apology"
-                        ):
-                            if not draw:
-                                resp_txt = result_text + response["arguments"][0][
-                                    "messages"
-                                ][0]["adaptiveCards"][0]["body"][0].get("text", "")
-                                resp_txt_no_link = result_text + response["arguments"][
-                                    0
-                                ]["messages"][0].get("text", "")
-                                if response["arguments"][0]["messages"][0].get(
-                                    "messageType"
-                                ):
-                                    resp_txt = (
-                                        resp_txt
-                                        + response["arguments"][0]["messages"][0][
-                                            "adaptiveCards"
-                                        ][0]["body"][0]["inlines"][0].get("text")
-                                        + "\n"
-                                    )
-                                    result_text = (
-                                        result_text
-                                        + response["arguments"][0]["messages"][0][
-                                            "adaptiveCards"
-                                        ][0]["body"][0]["inlines"][0].get("text")
-                                        + "\n"
-                                    )
+                        ) and not draw:
+                            resp_txt = result_text + response["arguments"][0][
+                                "messages"
+                            ][0]["adaptiveCards"][0]["body"][0].get("text", "")
+                            resp_txt_no_link = result_text + response["arguments"][0][
+                                "messages"
+                            ][0].get("text", "")
+                            if response["arguments"][0]["messages"][0].get(
+                                "messageType",
+                            ):
+                                resp_txt = (
+                                    resp_txt
+                                    + response["arguments"][0]["messages"][0][
+                                        "adaptiveCards"
+                                    ][0]["body"][0]["inlines"][0].get("text")
+                                    + "\n"
+                                )
+                                result_text = (
+                                    result_text
+                                    + response["arguments"][0]["messages"][0][
+                                        "adaptiveCards"
+                                    ][0]["body"][0]["inlines"][0].get("text")
+                                    + "\n"
+                                )
                         yield False, resp_txt
 
                 elif response.get("type") == 2:
+                    if response["item"]["result"].get("error"):
+                        raise Exception(f"{response['item']['result']['value']}: {response['item']['result']['message']}")
                     if draw:
                         cache = response["item"]["messages"][1]["adaptiveCards"][0][
                             "body"
@@ -571,7 +563,7 @@ class _ChatHub:
                             "text"
                         ] = resp_txt
                         print(
-                            f"Preserved the message from being deleted",
+                            "Preserved the message from being deleted",
                             file=sys.stderr,
                         )
                     final = True
@@ -700,7 +692,9 @@ class Chatbot:
         Reset the conversation
         """
         await self.close()
-        self.chat_hub = _ChatHub(await _Conversation.create(self.cookies))
+        self.chat_hub = _ChatHub(
+            await _Conversation.create(self.cookies, self.proxy),
+        )
 
 
 async def _get_input_async(
