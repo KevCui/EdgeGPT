@@ -290,7 +290,6 @@ class _Conversation:
 
     def __init__(
         self,
-        cookies: dict | None = None,
         proxy: str | None = None,
         async_mode: bool = False,
     ) -> None:
@@ -318,8 +317,6 @@ class _Conversation:
             timeout=30,
             headers=HEADERS_INIT_CONVER,
         )
-        for cookie in cookies:
-            self.session.cookies.set(cookie["name"], cookie["value"])
 
         # Send GET request
         response = self.session.get(
@@ -342,7 +339,6 @@ class _Conversation:
 
     @staticmethod
     async def create(
-        cookies: dict,
         proxy: str | None = None,
     ) -> _Conversation:
         self = _Conversation(async_mode=True)
@@ -370,9 +366,6 @@ class _Conversation:
             headers=HEADERS_INIT_CONVER,
             transport=transport,
         ) as client:
-            for cookie in cookies:
-                client.cookies.set(cookie["name"], cookie["value"])
-
             # Send GET request
             response = await client.get(
                 url=os.environ.get("BING_PROXY_URL")
@@ -418,7 +411,6 @@ class _ChatHub:
         self,
         prompt: str,
         wss_link: str,
-        cookies: str,
         conversation_style: CONVERSATION_STYLE_TYPE = None,
         raw: bool = False,
         options: dict = None,
@@ -501,9 +493,6 @@ class _ChatHub:
                             response["arguments"][0]["messages"][0].get("messageType")
                             == "GenerateContentQuery"
                         ):
-                            for item in cookies:
-                                if item["name"] == "_U":
-                                    U = item["value"]
                             async with ImageGenAsync(U, True) as image_generator:
                                 images = await image_generator.get_images(
                                     response["arguments"][0]["messages"][0]["text"],
@@ -584,45 +573,21 @@ class Chatbot:
 
     def __init__(
         self,
-        cookies: dict = None,
         proxy: str | None = None,
-        cookie_path: str = None,
     ) -> None:
-        if cookies is None:
-            cookies = {}
-        if cookie_path is not None:
-            try:
-                with open(cookie_path, encoding="utf-8") as f:
-                    self.cookies = json.load(f)
-            except FileNotFoundError as exc:
-                raise FileNotFoundError("Cookie file not found") from exc
-        else:
-            self.cookies = cookies
         self.proxy: str | None = proxy
         self.chat_hub: _ChatHub = _ChatHub(
-            _Conversation(self.cookies, self.proxy),
+            _Conversation(self.proxy),
         )
 
     @staticmethod
     async def create(
-        cookies: dict = None,
         proxy: str | None = None,
-        cookie_path: str = None,
     ):
         self = Chatbot.__new__(Chatbot)
-        if cookies is None:
-            cookies = {}
-        if cookie_path is not None:
-            try:
-                with open(cookie_path, encoding="utf-8") as f:
-                    self.cookies = json.load(f)
-            except FileNotFoundError as exc:
-                raise FileNotFoundError("Cookie file not found") from exc
-        else:
-            self.cookies = cookies
         self.proxy = proxy
         self.chat_hub = _ChatHub(
-            await _Conversation.create(self.cookies, self.proxy),
+            await _Conversation.create(self.proxy),
         )
         return self
 
@@ -643,7 +608,6 @@ class Chatbot:
             conversation_style=conversation_style,
             wss_link=wss_link,
             options=options,
-            cookies=self.cookies,
             webpage_context=webpage_context,
             search_result=search_result,
         ):
@@ -671,7 +635,6 @@ class Chatbot:
             wss_link=wss_link,
             raw=raw,
             options=options,
-            cookies=self.cookies,
             webpage_context=webpage_context,
             search_result=search_result,
         ):
@@ -689,7 +652,7 @@ class Chatbot:
         """
         await self.close()
         self.chat_hub = _ChatHub(
-            await _Conversation.create(self.cookies, self.proxy),
+            await _Conversation.create(self.proxy),
         )
 
 
@@ -735,7 +698,7 @@ async def async_main(args: argparse.Namespace) -> None:
     """
     Main function
     """
-    bot = Chatbot(proxy=args.proxy, cookies=args.cookies)
+    bot = Chatbot(proxy=args.proxy)
     session = _create_session()
     completer = _create_completer(["!help", "!exit", "!reset"])
     initial_prompt = args.prompt_and_quit if args.prompt_and_quit else args.prompt
@@ -835,13 +798,6 @@ def main() -> None:
         default="balanced",
     )
     parser.add_argument(
-        "--cookie-file",
-        type=str,
-        default=os.environ.get("COOKIE_FILE", ""),
-        required=False,
-        help="Cookie file used for authentication (defaults to COOKIE_FILE environment variable)",
-    )
-    parser.add_argument(
         "--prompt",
         type=str,
         default="",
@@ -856,18 +812,6 @@ def main() -> None:
         help="prompt to start with and then quit after getting reply",
     )
     args = parser.parse_args()
-    if not args.cookie_file:
-        parser.print_help()
-        parser.exit(
-            1,
-            "ERROR: use --cookie-file or set the COOKIE_FILE environment variable",
-        )
-    try:
-        args.cookies = json.loads(Path(args.cookie_file).read_text(encoding="utf-8"))
-    except OSError as exc:
-        print(f"Could not open cookie file: {exc}", file=sys.stderr)
-        sys.exit(1)
-
     asyncio.run(async_main(args))
 
 
